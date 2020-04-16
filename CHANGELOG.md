@@ -1,5 +1,128 @@
 # Changelog
 
+## ✨ **0.14.3** *(2020-04-04)*
+
+- #### 🛠 Fixes
+
+  - Remove `html!` component validation to allow generic components. [[@mankinskin], [#1065](https://github.com/yewstack/yew/pull/1065)]
+  - Improve `Debug` formatting for `VTag` and `VText`. [[@dancespiele], [#1059](https://github.com/yewstack/yew/pull/1059)]
+  - Implement `Default` for `Callback`. [[@TheNeikos], [#1043](https://github.com/yewstack/yew/pull/1043)]
+
+## ✨ **0.14.2** *(2020-03-23)*
+
+- #### 🛠 Fixes
+
+  - Fix issue where components were rendered out of order. [[@mrh0057] & [@jstarry], [#1051](https://github.com/yewstack/yew/pull/1051)]
+  - Reset Select component correctly in Firefox / Edge. [[@kuy], [#987](https://github.com/yewstack/yew/pull/987)]
+
+## ✨ **0.14.1** *(2020-03-14)*
+
+- #### 🛠 Fixes
+
+  - `Connected` message was only called for first bridge creation. [[@nicklaswj], [#1029](https://github.com/yewstack/yew/pull/1029)]
+
+## ✨ **0.14** *(2020-03-14)*
+
+Happy 🥧 (PI) Day! This release brings a number of bug fixes for `web-sys` apps and ergonomic improvements to the API. Huge thanks to the community for diving into the migration from `stdweb` to `web-sys` so quickly and uncovering these issues!
+
+#### Changelog
+
+- #### ⚡️ Features
+
+  - Implemented `Clone` for `WebSocketStatus`. [[@kellytk], [#1023](https://github.com/yewstack/yew/pull/1023)]
+  - Improved ergonomics for message APIs by accepting `Into<Msg>`. [[@captain-yossarian], [#999](https://github.com/yewstack/yew/pull/999)]
+  - `html!` improved compiler messages and flexible syntax for `with props`. [[@captain-yossarian], [#960](https://github.com/yewstack/yew/pull/960)]
+
+- #### 🛠 Fixes
+
+  - Fixed panic in `stdweb` `ResizeService` event handling. [[@nicklaswj], [#1014](https://github.com/yewstack/yew/pull/1014)]
+  - Removed build check for OS compatibility. [[@jstarry], [#1019](https://github.com/yewstack/yew/pull/1019)]
+  - Fixed interval and timer usage in `web-sys` workers by updating `gloo`. [[@jstarry], [#1018](https://github.com/yewstack/yew/pull/1018)]
+  - Send `Connected` message for Public agents. [[@TheNeikos], [#1007](https://github.com/yewstack/yew/pull/1007)]
+  - Fixed `web-sys` Public / Private agent initialization. [[@jstarry], [#1006](https://github.com/yewstack/yew/pull/1006)]
+  - Fixed websocket 'text' message handling for `web-sys` agents. [[@jstarry], [#1005](https://github.com/yewstack/yew/pull/1005)]
+
+- #### 🚨 Breaking changes
+
+  - `FetchError::FetchFailed` enum variant now wraps a `String` to hold the failure reason. [[@jstarry], [#1025](https://github.com/yewstack/yew/pull/1025)]
+  - Message APIs now accept `Into<Msg>`, so calling `msg.into()` will cause compile errors. [[@captain-yossarian], [#999](https://github.com/yewstack/yew/pull/999)]
+
+## ✨ **0.13.2** *(2020-03-05)*
+
+- #### 🛠 Fixes
+
+  - Fix clippy warning when building with `web_sys` feature. [[@jstarry], [#1001](https://github.com/yewstack/yew/pull/1001)]
+
+## ✨ **0.13.1** *(2020-03-04)*
+
+- #### 🛠 Fixes
+
+  - Fix for `web-sys` version `0.3.36`. [[@detegr], [#997](https://github.com/yewstack/yew/pull/997)]
+
+## ✨ **0.13** *(2020-03-01)*
+
+`web-sys` support has arrived! [@daxpedda] spear-headed the effort and courageously integrated `web-sys` while maintaining support for `stdweb` through no small amount of `cfg` macro usage. We chose to continue support for apps built with `stdweb` because the dev experience is still quite a bit better _(Unfortunately `cargo-web` is incompatible with `web-sys`)_. However, the Yew team recognizes that the future of `cargo-web` of `stdweb` are uncertain. For this reason, we recommend devs start making the switch over to `web-sys` and `wasm-bindgen`. We will likely invest in improving the dev experience with these tools so that switching over is eventually a no-brainer. Please reach out with ideas and feedback for this migration through Github issues and in our Gitter chatroom!
+
+After upgrading to v0.13, devs will now have to opt in to either `stdweb` or `web-sys` by using either the `"web_sys"` or `"std_web"` on the `yew` crate in their `Cargo.toml`.
+
+```toml
+# Choose `stdweb`
+yew = { version = "0.13", features = ["std_web"] }
+
+# Choose `web-sys`
+yew = { version = "0.13", features = ["web_sys"] }
+```
+
+Lastly, take note that API docs on https://docs.rs/yew will be using the `"web_sys"` feature. For `"std_web"` docs, please visit https://docs.rs/yew-stdweb.
+
+#### Changelog
+
+- #### ⚡️ Features
+
+  - Added support for building apps with `web-sys`. [[@daxpedda], [#961](https://github.com/yewstack/yew/pull/961)]
+  - Properties 2.0 [[@AlephAlpha], [#975](https://github.com/yewstack/yew/pull/975)]
+
+    Component properties are now assumed to be required unless otherwise annotated with a default value. Check out the proposal issue [#928](https://github.com/yewstack/yew/issues/928) for more details!
+
+- #### 🛠 Fixes
+
+  - Fixed `Component` children re-rendering bug. [[@jstarry], [#980](https://github.com/yewstack/yew/pull/980)]
+  - Fixed panic when interacting with agents after receiving an agent message. [[@jstarry], [#981](https://github.com/yewstack/yew/pull/981)]
+  - Fixed panic when a component with a root `VRef` node is detached. [[@jstarry], [#983](https://github.com/yewstack/yew/pull/983)]
+  - Fixed annoying warning when a component with a root `VTag` node is detached. [[@jstarry], [#983](https://github.com/yewstack/yew/pull/983)]
+
+- #### 🚨 Breaking changes
+
+  - Changed `Properties` macro behavior. Check out the proposal issue [#928](https://github.com/yewstack/yew/issues/928) for more details! [[@AlephAlpha], [#975](https://github.com/yewstack/yew/pull/975)]
+  - Cleaned up exported apis and doc visibility. [[@jstarry], [#977](https://github.com/yewstack/yew/pull/977)]
+  - `ReaderService` methods now return a `Result` instead of panicking.  [[@daxpedda], [#868](https://github.com/yewstack/yew/pull/868)]
+  - `FetchService` methods now return a `Result` instead of panicking.  [[@daxpedda], [#867](https://github.com/yewstack/yew/pull/867)]
+  - `StorageService` methods now return a `Result` instead of panicking.  [[@daxpedda], [#827](https://github.com/yewstack/yew/pull/827)]
+
+## ✨ **0.12** *(2020-02-16)*
+
+- #### ⚡️ Features
+
+  - Improved ergonomics for `html! { for .. }`. [[@jstarry], [#875](https://github.com/yewstack/yew/pull/875)]
+  - Added `#[props(default = "fn_path")]` for specifying a default property value. [[@AlephAlpha], [#881](https://github.com/yewstack/yew/pull/881)]
+  - Exposed the macros for creating format types. [[@ctm], [#883](https://github.com/yewstack/yew/pull/883)]
+  - Added support for binary-only and text-only formats in `WebSocketService`. [[@ctm], [#851](https://github.com/yewstack/yew/pull/851)]
+  - Implemented `PartialEq` for `ChildrenRenderer` to allow `children` comparison. [[@jstarry], [#916](https://github.com/yewstack/yew/pull/916)]
+  - Reduced restrictions on `ComponentLink` methods to improve `Future` support. [[@jplatte], [#931](https://github.com/yewstack/yew/pull/931)]
+  - Added `referrer`, `referrer_policy` and `integrity` to `FetchOptions`. [[@leo-lb], [#931](https://github.com/yewstack/yew/pull/931)]
+ 
+- #### 🛠 Fixes
+
+  - Fixed touch event listeners. [[@AlephAlpha], [#872](https://github.com/yewstack/yew/pull/872)]
+  - Fixed bad behavior when setting a `ref` on a `Component`. [[@jstarry], [#913](https://github.com/yewstack/yew/pull/913)]
+  - Fixed ResizeTask cancellation. [[@jstarry], [#915](https://github.com/yewstack/yew/pull/915)]
+
+- #### 🚨 Breaking changes
+
+  - Switched from using `failure` to `anyhow` and `thiserror` for Yew errors. [[@daxpedda], [#863](https://github.com/yewstack/yew/pull/863)]
+  - Removed `cancel` method from `Task` trait in favor of relying on [`Drop`](https://doc.rust-lang.org/book/ch15-03-drop.html). [[@kakoc], [#899](https://github.com/yewstack/yew/pull/899)]
+  - Renamed `NodeRef.try_into` to `NodeRef.cast` to avoid trait conflicts. [[@jstarry], [#917](https://github.com/yewstack/yew/pull/917)]
+
 ## ✨ **0.11** *(2020-01-06)*
 
 This release aims to lay the groundwork for Yew component libraries and clean up the API for the ever elusive 1.0 release.
@@ -288,7 +411,7 @@ cloned is when a wrapper component re-renders nested children components.
   ```rust
   use stdweb::web::html_element::InputElement;
   use stdweb::web::IHtmlElement;
-  use yew::*;
+  use yew::prelude::*;
 
   pub struct Input {
       node_ref: NodeRef,
@@ -638,25 +761,38 @@ This release introduces the concept of an `Agent`. Agents are separate activitie
 ## ✨ **0.1** *(2017-12-31)*
 
 [Web Workers API]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API
+[@AlephAlpha]: https://github.com/AlephAlpha
 [@astraw]: https://github.com/astraw
 [@boydjohnson]: https://github.com/boydjohnson
+[@captain-yossarian]: https://github.com/captain-yossarian
 [@carlosdp]: https://github.com/carlosdp
 [@charvp]: https://github.com/charvp
 [@ctaggart]: https://github.com/ctaggart
+[@ctm]: https://github.com/ctm
+[@dancespiele]: https://github.com/dancespiele
+[@daxpedda]: https://github.com/daxpedda
 [@davidkna]: https://github.com/davidkna
 [@DenisKolodin]: https://github.com/DenisKolodin
 [@dermetfan]: https://github.com/dermetfan
+[@detegr]: https://github.com/Detegr
 [@dunnock]: https://github.com/dunnock
 [@hgzimmerman]: https://github.com/hgzimmerman
 [@izissise]: https://github.com/izissise
+[@jplatte]: https://github.com/jplatte
 [@jstarry]: https://github.com/jstarry
+[@kakoc]: https://github.com/kakoc
 [@kellytk]: https://github.com/kellytk
+[@kuy]: https://github.com/kuy
+[@leo-lb]: https://github.com/leo-lb
 [@lizhaoxian]: https://github.com/lizhaoxian
+[@mankinskin]: https://github.com/mankinskin
 [@mdtusz]: https://github.com/mdtusz
 [@mrh0057]: https://github.com/mrh0057
+[@nicklaswj]: https://github.com/nicklaswj
 [@philip-peterson]: https://github.com/philip-peterson
 [@serzhiio]: https://github.com/serzhiio
 [@stkevintan]: https://github.com/stkevintan
+[@TheNeikos]: https://github.com/TheNeikos
 [@tiziano88]: https://github.com/tiziano88
 [@trivigy]: https://github.com/trivigy
 [@totorigolo]: https://github.com/totorigolo

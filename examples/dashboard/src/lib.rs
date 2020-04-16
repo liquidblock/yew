@@ -91,9 +91,9 @@ impl Model {
         );
         let request = Request::get("/data.json").body(Nothing).unwrap();
         if binary {
-            self.fetch_service.fetch_binary(request, callback)
+            self.fetch_service.fetch_binary(request, callback).unwrap()
         } else {
-            self.fetch_service.fetch(request, callback)
+            self.fetch_service.fetch(request, callback).unwrap()
         }
     }
 
@@ -111,9 +111,9 @@ impl Model {
         );
         let request = Request::get("/data.toml").body(Nothing).unwrap();
         if binary {
-            self.fetch_service.fetch_binary(request, callback)
+            self.fetch_service.fetch_binary(request, callback).unwrap()
         } else {
-            self.fetch_service.fetch(request, callback)
+            self.fetch_service.fetch(request, callback).unwrap()
         }
     }
 }
@@ -186,6 +186,10 @@ impl Component for Model {
         true
     }
 
+    fn change(&mut self, _: Self::Properties) -> ShouldRender {
+        false
+    }
+
     fn view(&self) -> Html {
         html! {
             <div>
@@ -201,19 +205,19 @@ impl Component for Model {
                     </button>
                     { self.view_data() }
                     <button disabled=self.ws.is_some()
-                            onclick=self.link.callback(|_| WsAction::Connect.into())>
+                            onclick=self.link.callback(|_| WsAction::Connect)>
                         { "Connect To WebSocket" }
                     </button>
                     <button disabled=self.ws.is_none()
-                            onclick=self.link.callback(|_| WsAction::SendData(false).into())>
+                            onclick=self.link.callback(|_| WsAction::SendData(false))>
                         { "Send To WebSocket" }
                     </button>
                     <button disabled=self.ws.is_none()
-                            onclick=self.link.callback(|_| WsAction::SendData(true).into())>
+                            onclick=self.link.callback(|_| WsAction::SendData(true))>
                         { "Send To WebSocket [binary]" }
                     </button>
                     <button disabled=self.ws.is_none()
-                            onclick=self.link.callback(|_| WsAction::Disconnect.into())>
+                            onclick=self.link.callback(|_| WsAction::Disconnect)>
                         { "Close WebSocket connection" }
                     </button>
                 </nav>

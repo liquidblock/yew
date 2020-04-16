@@ -2,10 +2,19 @@
 
 use super::{VChild, VComp, VDiff, VList, VTag, VText};
 use crate::html::{Component, Renderable};
+use cfg_if::cfg_if;
+use log::warn;
 use std::cmp::PartialEq;
 use std::fmt;
 use std::iter::FromIterator;
-use stdweb::web::{Element, INode, Node};
+
+cfg_if! {
+    if #[cfg(feature = "std_web")] {
+        use stdweb::web::{Element, INode, Node};
+    } else if #[cfg(feature = "web_sys")] {
+        use web_sys::{Element, Node};
+    }
+}
 
 /// Bind virtual element to a DOM reference.
 #[derive(Clone)]
@@ -22,6 +31,18 @@ pub enum VNode {
     VRef(Node),
 }
 
+impl VNode {
+    pub fn key(&self) -> &Option<String> {
+        match self {
+            VNode::VTag(vtag) => &vtag.key,
+            VNode::VText(_) => &None,
+            VNode::VComp(vcomp) => &vcomp.key,
+            VNode::VList(vlist) => &vlist.key,
+            VNode::VRef(_) => &None,
+        }
+    }
+}
+
 impl VDiff for VNode {
     /// Remove VNode from parent.
     fn detach(&mut self, parent: &Element) -> Option<Node> {
@@ -32,9 +53,9 @@ impl VDiff for VNode {
             VNode::VList(ref mut vlist) => vlist.detach(parent),
             VNode::VRef(ref node) => {
                 let sibling = node.next_sibling();
-                parent
-                    .remove_child(node)
-                    .expect("can't remove node by VRef");
+                if parent.remove_child(node).is_err() {
+                    warn!("Node not found to remove VRef");
+                }
                 sibling
             }
         }
@@ -57,11 +78,22 @@ impl VDiff for VNode {
                     None => None,
                 };
                 if let Some(sibling) = sibling {
+                    let sibling = &sibling;
+                    #[cfg(feature = "web_sys")]
+                    let sibling = Some(sibling);
                     parent
-                        .insert_before(node, &sibling)
+                        .insert_before(node, sibling)
                         .expect("can't insert element before sibling");
                 } else {
-                    parent.append_child(node);
+                    #[cfg_attr(
+                        feature = "std_web",
+                        allow(clippy::let_unit_value, unused_variables)
+                    )]
+                    {
+                        let result = parent.append_child(node);
+                        #[cfg(feature = "web_sys")]
+                        result.expect("can't append node to parent");
+                    }
                 }
 
                 Some(node.to_owned())
@@ -136,9 +168,9 @@ impl fmt::Debug for VNode {
         match *self {
             VNode::VTag(ref vtag) => vtag.fmt(f),
             VNode::VText(ref vtext) => vtext.fmt(f),
-            VNode::VComp(_) => "Component<>".fmt(f),
-            VNode::VList(_) => "List<>".fmt(f),
-            VNode::VRef(_) => "NodeReference<>".fmt(f),
+            VNode::VComp(ref vcomp) => vcomp.fmt(f),
+            VNode::VList(ref vlist) => vlist.fmt(f),
+            VNode::VRef(ref vref) => vref.fmt(f),
         }
     }
 }

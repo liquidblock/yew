@@ -79,6 +79,7 @@ impl Parse for HtmlTag {
 }
 
 impl ToTokens for HtmlTag {
+    #[allow(clippy::cognitive_complexity)]
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let HtmlTag {
             tag_name,
@@ -96,6 +97,7 @@ impl ToTokens for HtmlTag {
             value,
             checked,
             node_ref,
+            key,
             href,
             listeners,
         } = &attributes;
@@ -141,13 +143,18 @@ impl ToTokens for HtmlTag {
                 #vtag.node_ref = #node_ref;
             }
         });
+        let set_key = key.iter().map(|key| {
+            quote! {
+                #vtag.key = Some(#key);
+            }
+        });
         let listeners = listeners.iter().map(|listener| {
             let name = &listener.label.name;
             let callback = &listener.value;
 
             quote_spanned! {name.span()=> {
                 ::yew::html::#name::Wrapper::new(
-                    <::yew::virtual_dom::vtag::VTag as ::yew::virtual_dom::Transformer<_, _>>::transform(
+                    <::yew::virtual_dom::VTag as ::yew::virtual_dom::Transformer<_, _>>::transform(
                         #callback
                     )
                 )
@@ -155,7 +162,7 @@ impl ToTokens for HtmlTag {
         });
 
         tokens.extend(quote! {{
-            let mut #vtag = ::yew::virtual_dom::vtag::VTag::new(#name);
+            let mut #vtag = ::yew::virtual_dom::VTag::new(#name);
             #(#set_kind)*
             #(#set_value)*
             #(#add_href)*
@@ -163,6 +170,7 @@ impl ToTokens for HtmlTag {
             #(#set_booleans)*
             #(#set_classes)*
             #(#set_node_ref)*
+            #(#set_key)*
             #vtag.add_attributes(vec![#(#attr_pairs),*]);
             #vtag.add_listeners(vec![#(::std::rc::Rc::new(#listeners)),*]);
             #vtag.add_children(vec![#(#children),*]);
@@ -184,10 +192,18 @@ impl PeekValue<TagName> for HtmlTagOpen {
         let (punct, cursor) = cursor.punct()?;
         (punct.as_char() == '<').as_option()?;
 
-        let (name, _) = TagName::peek(cursor)?;
-        non_capitalized_ascii(&name.to_string()).as_option()?;
-
-        Some(name)
+        let (name, cursor) = TagName::peek(cursor)?;
+        if name.to_string() == "key" {
+            let (punct, _) = cursor.punct()?;
+            if punct.as_char() == '=' {
+                None
+            } else {
+                Some(name)
+            }
+        } else {
+            non_capitalized_ascii(&name.to_string()).as_option()?;
+            Some(name)
+        }
     }
 }
 
