@@ -1,21 +1,40 @@
 //! This module contains the implementation of reactive virtual dom concept.
 
+#[doc(hidden)]
 pub mod vcomp;
+#[doc(hidden)]
 pub mod vlist;
+#[doc(hidden)]
 pub mod vnode;
+#[doc(hidden)]
 pub mod vtag;
+#[doc(hidden)]
 pub mod vtext;
 
+use cfg_if::cfg_if;
 use indexmap::set::IndexSet;
 use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
-use stdweb::web::{Element, EventListenerHandle, Node};
+cfg_if! {
+    if #[cfg(feature = "std_web")] {
+        use crate::html::EventListener;
+        use stdweb::web::{Element, Node};
+    } else if #[cfg(feature = "web_sys")] {
+        use gloo::events::EventListener;
+        use web_sys::{Element, Node};
+    }
+}
 
+#[doc(inline)]
 pub use self::vcomp::{VChild, VComp};
+#[doc(inline)]
 pub use self::vlist::VList;
+#[doc(inline)]
 pub use self::vnode::VNode;
+#[doc(inline)]
 pub use self::vtag::VTag;
+#[doc(inline)]
 pub use self::vtext::VText;
 
 /// `Listener` trait is an universal implementation of an event listener
@@ -24,7 +43,7 @@ pub trait Listener {
     /// Returns standard name of DOM's event.
     fn kind(&self) -> &'static str;
     /// Attaches a listener to the element.
-    fn attach(&self, element: &Element) -> EventListenerHandle;
+    fn attach(&self, element: &Element) -> EventListener;
 }
 
 impl fmt::Debug for dyn Listener {
@@ -57,10 +76,8 @@ impl Classes {
     ///
     /// Prevents duplication of class names.
     pub fn push(&mut self, class: &str) {
-        let class = class.trim();
-        if !class.is_empty() {
-            self.set.insert(class.into());
-        }
+        let classes_to_add: Classes = class.into();
+        self.set.extend(classes_to_add.set);
     }
 
     /// Check the set contains a class.
@@ -129,7 +146,9 @@ impl<T: AsRef<str>> From<Vec<T>> for Classes {
     fn from(t: Vec<T>) -> Self {
         let set = t
             .iter()
-            .map(|x| x.as_ref().to_string())
+            .map(|x| x.as_ref())
+            .flat_map(|s| s.split_whitespace())
+            .map(String::from)
             .filter(|c| !c.is_empty())
             .collect();
         Self { set }
@@ -166,12 +185,12 @@ enum Reform {
     Before(Option<Node>),
 }
 
-// TODO What about to implement `VDiff` for `Element`?
+// TODO(#938): What about to implement `VDiff` for `Element`?
 // In makes possible to include ANY element into the tree.
 // `Ace` editor embedding for example?
 
 /// This trait provides features to update a tree by calculating a difference against another tree.
-pub trait VDiff {
+pub(crate) trait VDiff {
     /// Remove itself from parent and return the next sibling.
     fn detach(&mut self, parent: &Element) -> Option<Node>;
 
@@ -208,4 +227,49 @@ pub trait VDiff {
 pub trait Transformer<FROM, TO> {
     /// Transforms one type to another.
     fn transform(from: FROM) -> TO;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_is_initially_empty() {
+        let subject = Classes::new();
+        assert!(subject.is_empty());
+    }
+
+    #[test]
+    fn it_pushes_value() {
+        let mut subject = Classes::new();
+        subject.push("foo");
+        assert!(!subject.is_empty());
+        assert!(subject.contains("foo"));
+    }
+
+    #[test]
+    fn it_adds_values_via_extend() {
+        let mut other = Classes::new();
+        other.push("bar");
+        let subject = Classes::new().extend(other);
+        assert!(subject.contains("bar"));
+    }
+
+    #[test]
+    fn it_contains_both_values() {
+        let mut other = Classes::new();
+        other.push("bar");
+        let mut subject = Classes::new().extend(other);
+        subject.push("foo");
+        assert!(subject.contains("foo"));
+        assert!(subject.contains("bar"));
+    }
+
+    #[test]
+    fn it_splits_class_with_spaces() {
+        let mut subject = Classes::new();
+        subject.push("foo bar");
+        assert!(subject.contains("foo"));
+        assert!(subject.contains("bar"));
+    }
 }
